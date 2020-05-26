@@ -1,0 +1,37 @@
+{
+    "name": "giudicelli/distributed-architecture-queue",
+    "type": "library",
+    "description": "PHP distributed architecture queue",
+    "keywords": [],
+    "homepage": "https://github.com/giudicelli/distributed-architecture-queue",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Frédéric Giudicelli"
+        }
+    ],
+    "require": {
+        "php": ">=7.2.5",
+        "psr/log": "~1.0",
+        "giudicelli/distributed-architecture": "^0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9"
+    },
+    "conflict": {
+    },
+    "suggest": {
+    },
+    "autoload": {
+        "psr-4": { "giudicelli\\DistributedArchitectureQueue\\": "src/" },
+        "exclude-from-classmap": [
+            "/tests/"
+        ]
+    },
+    "minimum-stability": "dev",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "master-dev"
+        }
+    }
+}
