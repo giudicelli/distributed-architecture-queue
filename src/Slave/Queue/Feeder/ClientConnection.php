@@ -2,8 +2,8 @@
 
 namespace giudicelli\DistributedArchitectureQueue\Slave\Queue\Feeder;
 
-use giudicelli\DistributedArchitectureQueue\Slave\Queue\AbstractNetwork;
-use giudicelli\DistributedArchitectureQueue\Slave\Queue\Helper;
+use giudicelli\DistributedArchitecture\Slave\StoppableInterface;
+use giudicelli\DistributedArchitectureQueue\Slave\Queue\ProtocolInterface;
 
 class ClientConnection
 {
@@ -11,21 +11,29 @@ class ClientConnection
     const STATE_READY = 1;
     const STATE_WAITING_ANSWER = 2;
 
+    /** @var StoppableInterface */
+    protected $stoppable;
+
+    /** @var ProtocolInterface */
+    protected $protocol;
+
     private $state;
 
     /** @var resource */
     private $socket;
 
-    /** @var \JsonSerializable */
+    /** @var null|\JsonSerializable */
     private $job;
 
-    public function __construct($socket)
+    public function __construct(StoppableInterface $stoppable, ProtocolInterface $protocol, $socket)
     {
+        $this->stoppable = $stoppable;
+        $this->protocol = $protocol;
         $this->socket = $socket;
         $this->state = self::STATE_HANDSHAKE;
 
-        $this->setsocketOptions();
-        $this->sendHandshake();
+        $this->protocol->setSocketOptions($this->socket);
+        $this->protocol->sendHandshake($socket);
     }
 
     public function __destruct()
@@ -55,41 +63,31 @@ class ClientConnection
 
     public function read(FeederInterface $feeder): void
     {
-        // We're expecting an answer from client
-        $result = @socket_read($this->socket, 8192, PHP_BINARY_READ);
+        switch ($this->state) {
+            case self::STATE_HANDSHAKE:
+                if (!$this->protocol->receiveHandshake($this->socket)) {
+                    return;
+                }
+                $this->state = self::STATE_READY;
 
-        // An error
-        if (false === $result && !Helper::isIgnorableSocketErrors($this->socket)) {
-            // Connection was closed while we were waiting
-            // for a job answer
-            if (self::STATE_WAITING_ANSWER === $this->state) {
-                $feeder->error($this->job);
-            }
+                break;
+            case self::STATE_WAITING_ANSWER:
+                try {
+                    if (!$this->protocol->receiveJobDone($this->socket)) {
+                        return;
+                    }
+                    $feeder->success($this->job);
+                    $this->job = null;
+                    $this->state = self::STATE_READY;
+                } catch (\Exception $e) {
+                    $feeder->error($this->job);
+                    $this->job = null;
 
-            throw new \Exception('Connection closed');
+                    throw $e;
+                }
+
+                break;
         }
-
-        // No data available
-        if (!$result) {
-            return;
-        }
-
-        $result = trim($result);
-
-        if (self::STATE_HANDSHAKE === $this->state) {
-            if (AbstractNetwork::COMMAND_HANDSHAKE !== $result) {
-                throw new \Exception('Invalid command while waiting for handshake');
-            }
-        } elseif (self::STATE_WAITING_ANSWER === $this->state) {
-            if (AbstractNetwork::COMMAND_DONE !== $result) {
-                $feeder->error($this->job);
-
-                throw new \Exception('Invalid command while waiting for answer');
-            }
-            $feeder->success($this->job);
-            $this->job = null;
-        }
-        $this->state = self::STATE_READY;
     }
 
     public function write(FeederInterface $feeder): bool
@@ -100,39 +98,17 @@ class ClientConnection
             return false;
         }
 
-        // Send the job
-        $jobStr = json_encode($job);
-        if (!Helper::socketSend($this->socket, $jobStr)) {
+        try {
+            $this->protocol->sendJob($this->socket, $job);
+        } catch (\Exception $e) {
             $feeder->error($job);
 
-            throw new \Exception('Connection closed while sending a job');
+            throw $e;
         }
+
         $this->job = $job;
         $this->state = self::STATE_WAITING_ANSWER;
 
         return true;
-    }
-
-    protected function setsocketOptions(): void
-    {
-        if (!@socket_set_nonblock($this->socket)) {
-            throw new \Exception('Failed to call socket_set_nonblock');
-        }
-        $linger = ['l_linger' => 0, 'l_onoff' => 1];
-        if (!@socket_set_option($this->socket, SOL_SOCKET, SO_LINGER, $linger)) {
-            throw new \Exception('Failed to call socket_set_option SO_LINGER on new socket');
-        }
-        if (!@socket_set_option($this->socket, SOL_SOCKET, SO_KEEPALIVE, 1)) {
-            throw new \Exception('Failed to call socket_set_option SO_KEEPALIVE on new socket');
-        }
-        // Will fail in case of a Unix socket, but it's ok
-        @socket_set_option($this->socket, SOL_TCP, TCP_NODELAY, 1);
-    }
-
-    protected function sendHandshake(): void
-    {
-        if (!Helper::socketSend($this->socket, AbstractNetwork::COMMAND_HANDSHAKE)) {
-            throw new \Exception('Connection was closed while sending handshake');
-        }
     }
 }

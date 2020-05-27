@@ -4,7 +4,9 @@ namespace giudicelli\DistributedArchitectureQueue\Slave\Queue\Consumer;
 
 use giudicelli\DistributedArchitecture\Slave\StoppableInterface;
 use giudicelli\DistributedArchitectureQueue\Slave\Queue\AbstractNetwork;
-use giudicelli\DistributedArchitectureQueue\Slave\Queue\Helper;
+use giudicelli\DistributedArchitectureQueue\Slave\Queue\Exception\NetworkException;
+use giudicelli\DistributedArchitectureQueue\Slave\Queue\ProtocolInterface;
+use MustStopException;
 
 class Client extends AbstractNetwork
 {
@@ -13,9 +15,9 @@ class Client extends AbstractNetwork
     protected $connectTime = 0;
     protected $gotHandshake = false;
 
-    public function __construct(StoppableInterface $stoppable, string $id, string $host, int $port, int $timeout = 5)
+    public function __construct(StoppableInterface $stoppable, ProtocolInterface $protocol, string $id, string $host, int $port, int $timeout = 5)
     {
-        parent::__construct($stoppable, $id, $port, $timeout);
+        parent::__construct($stoppable, $protocol, $id, $port, $timeout);
         $this->host = $host;
     }
 
@@ -29,40 +31,33 @@ class Client extends AbstractNetwork
     public function run(callable $handleCallback): void
     {
         while (!$this->stoppable->mustStop()) {
-            // Make sure we have a connection
-            while (!$this->checkConnection()) {
-                // Wait before retrying
-                if (!$this->stoppable->sleep(5)) {
-                    return;
+            try {
+                // Make sure we have a connection
+                while (!$this->checkConnection()) {
+                    // Wait before retrying
+                    if (!$this->stoppable->sleep(5)) {
+                        return;
+                    }
                 }
+            } catch (MustStopException $e) {
+                // We're supposed to stop, exit the loop
+                break;
             }
 
-            $data = '';
-            switch ($this->read($data)) {
-                case -1:
-                    // An error occured or we're supposed to reconnect
-                    $this->clean();
-                    // Wait a bit before reconnecting
+            try {
+                $job = $this->protocol->receiveJob($this->socket);
+                if (!$job) {
+                    // We didn't receive any data, wait a bit
                     $this->stoppable->sleep(1);
-
-                break;
-                case 0:
-                    // No data
-                    $this->stoppable->sleep(1);
-
-                break;
-                default:
-                    // Got data
-                    $item = json_decode($data, true);
-                    call_user_func($handleCallback, $item);
-
-                    // We let the feeder know we're done
-                    if (!Helper::socketSend($this->socket, self::COMMAND_DONE)) {
-                        $err = socket_strerror(socket_last_error($this->socket));
-                        echo "{level:warning}Connection closed while sending COMMAND_DONE: {$err}\n";
-                        $this->clean();
-                    }
-
+                } else {
+                    call_user_func($handleCallback, $job);
+                    $this->protocol->sendJobDone($this->socket);
+                }
+            } catch (NetworkException $e) {
+                echo '{level:warning}'.$e->getMessage()."\n";
+                $this->clean();
+            } catch (MustStopException $e) {
+                // We're supposed to stop, exit the loop
                 break;
             }
         }
@@ -88,14 +83,15 @@ class Client extends AbstractNetwork
 
         // Initial handshake
         if (!$this->gotHandshake) {
-            if (!$this->readHandshake()) {
+            try {
+                if ($this->protocol->receiveHandshake($this->socket)) {
+                    $this->protocol->sendHandshake($this->socket);
+                    $this->gotHandshake = true;
+                }
+            } catch (NetworkException $e) {
+                echo '{level:warning}'.$e->getMessage()."\n";
                 $this->clean();
 
-                return false;
-            }
-            // If we haven't received the handshake yet,
-            // we're not fully connected
-            if (!$this->gotHandshake) {
                 return false;
             }
         }
@@ -112,57 +108,8 @@ class Client extends AbstractNetwork
                 return false;
             }
         }
-        if (!@socket_set_nonblock($this->socket)) {
-            echo "{level:warning}Failed to call socket_set_nonblock\n";
-
-            return false;
-        }
-
-        $linger = ['l_linger' => 0, 'l_onoff' => 1];
-        if (!@socket_set_option($this->socket, SOL_SOCKET, SO_LINGER, $linger)) {
-            echo "{level:warning}Failed to call socket_set_option SO_LINGER\n";
-
-            return false;
-        }
-        if (!@socket_set_option($this->socket, SOL_SOCKET, SO_KEEPALIVE, 1)) {
-            echo "{level:warning}Failed to call socket_set_option SO_KEEPALIVE\n";
-
-            return false;
-        }
+        $this->protocol->setSocketOptions($this->socket);
         $this->connectTime = time();
-
-        return true;
-    }
-
-    protected function readHandshake(): bool
-    {
-        $buff = @socket_read($this->socket, 8192, PHP_BINARY_READ);
-        if ($this->stoppable->mustStop()) {
-            return false;
-        }
-        if (!$buff) {
-            if (false === $buff && !Helper::isIgnorableSocketErrors()) {
-                echo '{level:warning}Connection closed receiving handshake: '.socket_strerror(socket_last_error($this->socket))."\n";
-
-                return false;
-            }
-            // Not an error, we just haven't received the handshake yet
-            return true;
-        }
-        if (self::COMMAND_HANDSHAKE != trim($buff)) {
-            echo "{level:warning}We didn't receive a proper handshake: ".trim($buff)."\n";
-
-            return false;
-        }
-        // Send Handshake back
-        if (!Helper::socketSend($this->socket, self::COMMAND_HANDSHAKE)) {
-            $err = socket_strerror(socket_last_error($this->socket));
-            echo "{level:warning}Connection closed sending handshake back: {$err}\n";
-
-            return false;
-        }
-
-        $this->gotHandshake = true;
 
         return true;
     }
@@ -227,57 +174,6 @@ class Client extends AbstractNetwork
         echo "{level:debug}Connected to {$this->socketUnixPath}\n";
 
         return true;
-    }
-
-    protected function read(string &$data): int
-    {
-        $data = '';
-        $len = 0;
-        $t = 0;
-        do {
-            $buff = @socket_read($this->socket, 8192, PHP_BINARY_READ);
-            if ($this->stoppable->mustStop()) {
-                return -2;
-            }
-
-            if ($buff) {
-                $data .= $buff;
-                $len = strlen($data);
-                if ($len > $this->getMaxMessageSize()) {
-                    // Request connection close
-                    echo "{level:error}Message is too big.\n";
-                    $data = '';
-
-                    return -1;
-                }
-                $t = time();
-            } else {
-                if (false === $buff && !Helper::isIgnorableSocketErrors($this->socket)) {
-                    $err = socket_strerror(socket_last_error($this->socket));
-                    echo "{level:warning}Connection closed receiving content: {$err}\n";
-
-                    return -1;
-                }
-                if ($data) {
-                    // We started to get some data,
-                    // we need to fully have it !
-                    usleep(5000);
-                    if ((time() - $t) > $this->timeout) {
-                        // Timeout
-                        echo "{level:warning}Timeout while waiting for remaining content.\n";
-
-                        return -1;
-                    }
-                } else {
-                    // We didnt start getting data, we can return
-                    return 0;
-                }
-            }
-        } while (!$len || "\0" != $data[$len - 1]);
-
-        $data = trim($data);
-
-        return $len;
     }
 
     /**

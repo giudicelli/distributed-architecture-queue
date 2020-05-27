@@ -6,9 +6,6 @@ use giudicelli\DistributedArchitecture\Slave\StoppableInterface;
 
 abstract class AbstractNetwork
 {
-    const COMMAND_HANDSHAKE = 'GDAQ_Handshake';
-    const COMMAND_DONE = 'GDAQ_Done';
-
     protected $socket;
     protected $socketUnixPath = '';
 
@@ -17,12 +14,16 @@ abstract class AbstractNetwork
     /** @var StoppableInterface */
     protected $stoppable;
 
+    /** @var ProtocolInterface */
+    protected $protocol;
+
     protected $id = '';
     protected $timeout = 5;
 
-    public function __construct(StoppableInterface $stoppable, string $id, int $port, $timeout = 5)
+    public function __construct(StoppableInterface $stoppable, ProtocolInterface $protocol, string $id, int $port, $timeout = 5)
     {
         $this->stoppable = $stoppable;
+        $this->protocol = $protocol;
         $this->id = $id;
         $this->timeout = $timeout;
         $this->port = $port;

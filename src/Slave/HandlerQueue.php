@@ -9,6 +9,8 @@ use giudicelli\DistributedArchitectureQueue\Master\Handlers\Feeder\ConfigInterfa
 use giudicelli\DistributedArchitectureQueue\Slave\Queue\Consumer\Client;
 use giudicelli\DistributedArchitectureQueue\Slave\Queue\Feeder\FeederInterface;
 use giudicelli\DistributedArchitectureQueue\Slave\Queue\Feeder\Server;
+use giudicelli\DistributedArchitectureQueue\Slave\Queue\Protocol;
+use giudicelli\DistributedArchitectureQueue\Slave\Queue\ProtocolInterface;
 
 class HandlerQueue extends Handler
 {
@@ -70,7 +72,7 @@ class HandlerQueue extends Handler
         $port = $config->getPort();
         $bindTo = $config->getBindTo();
 
-        $server = new Server($this, $this->groupConfig->getName(), $bindTo, $port);
+        $server = new Server($this, $this->getProtocolHandler(), $this->groupConfig->getName(), $bindTo, $port);
         $server->run($feeder);
         $this->sendEnded();
     }
@@ -83,12 +85,17 @@ class HandlerQueue extends Handler
         $port = $config->getPort();
         $host = $config->getHost();
 
-        $client = new Client($this, $this->groupConfig->getName(), $host, $port);
+        $client = new Client($this, $this->getProtocolHandler(), $this->groupConfig->getName(), $host, $port);
 
         $me = $this;
         $client->run(function (array $item) use ($me, $processCallback) {
             call_user_func($processCallback, $me, $item);
         });
         $this->sendEnded();
+    }
+
+    protected function getProtocolHandler(): ProtocolInterface
+    {
+        return new Protocol($this);
     }
 }

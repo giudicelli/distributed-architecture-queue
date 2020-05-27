@@ -4,7 +4,7 @@ namespace giudicelli\DistributedArchitectureQueue\Slave\Queue\Feeder;
 
 use giudicelli\DistributedArchitecture\Slave\StoppableInterface;
 use giudicelli\DistributedArchitectureQueue\Slave\Queue\AbstractNetwork;
-use giudicelli\DistributedArchitectureQueue\Slave\Queue\Helper;
+use giudicelli\DistributedArchitectureQueue\Slave\Queue\ProtocolInterface;
 
 class Server extends AbstractNetwork
 {
@@ -14,9 +14,9 @@ class Server extends AbstractNetwork
     /** @var array<ClientConnection> */
     protected $connections = [];
 
-    public function __construct(StoppableInterface $stoppable, string $id, string $bindTo, int $port, int $timeout = 5)
+    public function __construct(StoppableInterface $stoppable, ProtocolInterface $protocol, string $id, string $bindTo, int $port, int $timeout = 5)
     {
-        parent::__construct($stoppable, $id, $port, $timeout);
+        parent::__construct($stoppable, $protocol, $id, $port, $timeout);
         @unlink($this->socketUnixPath);
         $this->bindTo = $bindTo;
     }
@@ -155,7 +155,7 @@ class Server extends AbstractNetwork
         $e = null;
         if (false === ($num = @socket_select($r, $w, $e, 0))) {
             // An error
-            if (Helper::isIgnorableSocketErrors()) {
+            if ($this->protocol->isErrorIgnorable()) {
                 $err = socket_strerror(socket_last_error());
                 echo "{level:warning}socket_select failed for readable sockets: {$err}\n";
             }
@@ -332,7 +332,7 @@ class Server extends AbstractNetwork
                     $socket = @socket_accept($s);
                     if ($socket) {
                         try {
-                            $this->connections[] = new ClientConnection($socket);
+                            $this->connections[] = new ClientConnection($this->stoppable, $this->protocol, $socket);
                             ++$newConnections;
                         } catch (\Exception $e) {
                             echo  '{level:warning}'.$e->getMessage()."\n";
@@ -340,7 +340,7 @@ class Server extends AbstractNetwork
                     }
                 }
             } elseif (false === $num) {
-                if (Helper::isIgnorableSocketErrors()) {
+                if ($this->protocol->isErrorIgnorable()) {
                     $err = socket_strerror(socket_last_error());
                     echo "{level:warning}socket_select failed: {$err}\n";
                 }
