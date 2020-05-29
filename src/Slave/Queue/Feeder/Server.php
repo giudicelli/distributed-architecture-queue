@@ -90,7 +90,7 @@ class Server extends AbstractNetwork
             if (!$newConnections && !$readStatus && !$writeStatus) {
                 $this->stoppable->sleep(2);
             } else {
-                $this->stoppable->sendPing();
+                $this->stoppable->ping();
             }
         }
 
@@ -327,6 +327,7 @@ class Server extends AbstractNetwork
             $r = [$this->socket, $this->socketUnix];
             $w = null;
             $e = null;
+            $num = 0;
             if (($num = @socket_select($r, $w, $e, 0, $timeout)) > 0) {
                 foreach ($r as $s) {
                     $socket = @socket_accept($s);
