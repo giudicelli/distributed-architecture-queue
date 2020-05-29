@@ -1,5 +1,5 @@
 
-# distributed-architecture-queue
+# distributed-architecture-queue ![CI](https://github.com/giudicelli/distributed-architecture-queue/workflows/CI/badge.svg)
 
 PHP Distributed Architecture Queue is a library that extends [distributed-architecture](https://github.com/giudicelli/distributed-architecture). It implements a feeder/consumers system to allow easy and quick usage in a distributed architecture.
 
