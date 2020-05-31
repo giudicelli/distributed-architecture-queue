@@ -2,6 +2,7 @@
 
 namespace giudicelli\DistributedArchitectureQueue\Master;
 
+use giudicelli\DistributedArchitecture\Master\EventsInterface;
 use giudicelli\DistributedArchitecture\Master\GroupConfigInterface;
 use giudicelli\DistributedArchitecture\Master\Launcher;
 use giudicelli\DistributedArchitectureQueue\Master\Handlers\Consumer\Local\Process as ProcessConsumerLocal;
@@ -12,7 +13,10 @@ use giudicelli\DistributedArchitectureQueue\Master\Handlers\Feeder\Remote\Proces
 
 class LauncherQueue extends Launcher
 {
-    public function run(array $groupConfigs): void
+    /**
+     * {@inheritdoc}
+     */
+    public function run(array $groupConfigs, ?EventsInterface $events = null): void
     {
         foreach ($groupConfigs as $groupConfig) {
             // Make sure we have a single feeder in the configuration
@@ -31,10 +35,13 @@ class LauncherQueue extends Launcher
             }
         }
 
-        parent::run($groupConfigs);
+        parent::run($groupConfigs, $events);
     }
 
-    protected function startGroup(GroupConfigInterface $groupConfig, int $idStart, int $groupIdStart, int $groupCount): int
+    /**
+     * {@inheritdoc}
+     */
+    protected function startGroup(GroupConfigInterface $groupConfig, int $idStart, int $groupIdStart, int $groupCount, ?EventsInterface $events): int
     {
         $processesCount = 0;
 
@@ -44,7 +51,7 @@ class LauncherQueue extends Launcher
                 break;
             }
             if (in_array(FeederConfigInterface::class, class_implements($processConfig))) {
-                $count = $this->startGroupProcess($groupConfig, $processConfig, $idStart, $groupIdStart, $groupCount);
+                $count = $this->startGroupProcess($groupConfig, $processConfig, $idStart, $groupIdStart, $groupCount, $events);
 
                 $idStart += $count;
                 $groupIdStart += $count;
@@ -65,7 +72,7 @@ class LauncherQueue extends Launcher
                 break;
             }
             if (!in_array(FeederConfigInterface::class, class_implements($processConfig))) {
-                $count = $this->startGroupProcess($groupConfig, $processConfig, $idStart, $groupIdStart, $groupCount);
+                $count = $this->startGroupProcess($groupConfig, $processConfig, $idStart, $groupIdStart, $groupCount, $events);
 
                 $idStart += $count;
                 $groupIdStart += $count;

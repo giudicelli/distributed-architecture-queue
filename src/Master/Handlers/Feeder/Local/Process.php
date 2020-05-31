@@ -22,7 +22,7 @@ class Process extends LocalProcess
         return Config::class;
     }
 
-    protected function getDisplay(): string
+    public function getDisplay(): string
     {
         return 'Feeder - '.parent::getDisplay();
     }

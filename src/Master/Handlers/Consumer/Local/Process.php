@@ -22,13 +22,13 @@ class Process extends LocalProcess
         return Config::class;
     }
 
+    public function getDisplay(): string
+    {
+        return 'Consumer - '.parent::getDisplay();
+    }
+
     protected function buildShellCommand(): string
     {
         return $this->buildShellQueueCommand(HandlerQueue::PARAM_COMMAND_START_CONSUMER);
-    }
-
-    protected function getDisplay(): string
-    {
-        return 'Consumer - '.parent::getDisplay();
     }
 }
