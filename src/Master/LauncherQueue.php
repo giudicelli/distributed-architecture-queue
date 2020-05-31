@@ -34,7 +34,7 @@ class LauncherQueue extends Launcher
         parent::run($groupConfigs);
     }
 
-    protected function startGroup(GroupConfigInterface $groupConfig, int $idStart, int $groupIdStart = 1): int
+    protected function startGroup(GroupConfigInterface $groupConfig, int $idStart, int $groupIdStart, int $groupCount): int
     {
         $processesCount = 0;
 
@@ -44,7 +44,7 @@ class LauncherQueue extends Launcher
                 break;
             }
             if (in_array(FeederConfigInterface::class, class_implements($processConfig))) {
-                $count = $this->startGroupProcess($groupConfig, $processConfig, $idStart, $groupIdStart);
+                $count = $this->startGroupProcess($groupConfig, $processConfig, $idStart, $groupIdStart, $groupCount);
 
                 $idStart += $count;
                 $groupIdStart += $count;
@@ -65,7 +65,7 @@ class LauncherQueue extends Launcher
                 break;
             }
             if (!in_array(FeederConfigInterface::class, class_implements($processConfig))) {
-                $count = $this->startGroupProcess($groupConfig, $processConfig, $idStart, $groupIdStart);
+                $count = $this->startGroupProcess($groupConfig, $processConfig, $idStart, $groupIdStart, $groupCount);
 
                 $idStart += $count;
                 $groupIdStart += $count;
