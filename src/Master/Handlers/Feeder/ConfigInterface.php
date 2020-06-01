@@ -4,6 +4,11 @@ namespace giudicelli\DistributedArchitectureQueue\Master\Handlers\Feeder;
 
 use giudicelli\DistributedArchitecture\Master\ProcessConfigInterface;
 
+/**
+ * Define the interface for a feeder config.
+ *
+ * @author Frédéric Giudicelli
+ */
 interface ConfigInterface extends ProcessConfigInterface
 {
     /**

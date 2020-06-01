@@ -4,8 +4,21 @@ namespace giudicelli\DistributedArchitectureQueue\Master\Handlers;
 
 use giudicelli\DistributedArchitectureQueue\Slave\HandlerQueue;
 
-trait ProcessTrait
+/**
+ * This trait is used by all the local process implementation.
+ *
+ *  @author Frédéric Giudicelli
+ */
+trait LocalProcessTrait
 {
+    /**
+     * Build a shell command to start a local queue process.
+     *
+     * @param string $command     the specific command to be interpreted by the Slave\HandlerQueue class
+     * @param array  $extraParams some extra params to pass to the shell command
+     *
+     * @return string the shell command
+     */
     protected function buildShellQueueCommand(string $command, ?array $extraParams = null): string
     {
         $params = $this->buildParams();

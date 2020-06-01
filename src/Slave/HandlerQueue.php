@@ -12,11 +12,19 @@ use giudicelli\DistributedArchitectureQueue\Slave\Queue\Feeder\Server;
 use giudicelli\DistributedArchitectureQueue\Slave\Queue\Protocol;
 use giudicelli\DistributedArchitectureQueue\Slave\Queue\ProtocolInterface;
 
+/**
+ * {@inheritdoc}
+ *
+ *  @author Frédéric Giudicelli
+ */
 class HandlerQueue extends Handler
 {
     const PARAM_COMMAND_START_FEEDER = 'startFeeder';
     const PARAM_COMMAND_START_CONSUMER = 'startConsumer';
 
+    /**
+     * {@inheritdoc}
+     */
     public function run(callable $processCallback): void
     {
         throw new \InvalidArgumentException('You cannot use this method, please use runQueue');
@@ -36,6 +44,9 @@ class HandlerQueue extends Handler
         $this->handleQueueCommand($processCallback, $feeder);
     }
 
+    /**
+     * Handle a queue command sent by the master.
+     */
     protected function handleQueueCommand(callable $processCallback, FeederInterface $feeder): void
     {
         $processConfig = $this->getCommandConfigObject();
@@ -56,6 +67,9 @@ class HandlerQueue extends Handler
         }
     }
 
+    /**
+     * Setup the signal handler to catch SIGTERM.
+     */
     protected function setUpSignalHandler(): void
     {
         // We want to know when we're asked to stop
@@ -64,6 +78,9 @@ class HandlerQueue extends Handler
         pcntl_signal(SIGTERM, [&$this, 'signalHandler']);
     }
 
+    /**
+     * Start the feeder server.
+     */
     protected function handleFeeder(FeederInterface $feeder, ProcessConfigInterface $config): void
     {
         if (!($config instanceof FeederConfigInterface)) {
@@ -77,6 +94,9 @@ class HandlerQueue extends Handler
         $this->sendEnded();
     }
 
+    /**
+     * Start the consumer client.
+     */
     protected function handleConsumer(callable $processCallback, ProcessConfigInterface $config): void
     {
         if (!($config instanceof ConsumerConfigInterface)) {
@@ -94,6 +114,9 @@ class HandlerQueue extends Handler
         $this->sendEnded();
     }
 
+    /**
+     * Return a protocol handler, it has to be the same implementation between the feeder and the consumers.
+     */
     protected function getProtocolHandler(): ProtocolInterface
     {
         return new Protocol($this);

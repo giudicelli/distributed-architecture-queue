@@ -11,6 +11,11 @@ use giudicelli\DistributedArchitectureQueue\Master\Handlers\Feeder\ConfigInterfa
 use giudicelli\DistributedArchitectureQueue\Master\Handlers\Feeder\Local\Process as ProcessFeederLocal;
 use giudicelli\DistributedArchitectureQueue\Master\Handlers\Feeder\Remote\Process as ProcessFeederRemote;
 
+/**
+ * This class is the implementation of the LauncherInterface interface. Its main role is to launch feeder/consumers processes.
+ *
+ *  @author Frédéric Giudicelli
+ */
 class LauncherQueue extends Launcher
 {
     /**
@@ -85,6 +90,9 @@ class LauncherQueue extends Launcher
         return $processesCount;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     protected function getProcessHandlersList(): array
     {
         return [

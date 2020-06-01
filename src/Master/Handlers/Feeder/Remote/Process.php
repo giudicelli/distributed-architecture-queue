@@ -14,11 +14,17 @@ use giudicelli\DistributedArchitectureQueue\Master\Handlers\Feeder\Local\Config 
  */
 class Process extends RemoteProcess
 {
+    /**
+     * {@inheritdoc}
+     */
     public static function getConfigClass(): string
     {
         return Config::class;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     protected function getRemoteConfigClass(): string
     {
         return ConfigLocal::class;

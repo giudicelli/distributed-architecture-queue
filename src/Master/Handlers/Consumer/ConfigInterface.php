@@ -4,6 +4,11 @@ namespace giudicelli\DistributedArchitectureQueue\Master\Handlers\Consumer;
 
 use giudicelli\DistributedArchitecture\Master\ProcessConfigInterface;
 
+/**
+ * Define the interface for a consumer config.
+ *
+ * @author Frédéric Giudicelli
+ */
 interface ConfigInterface extends ProcessConfigInterface
 {
     /**

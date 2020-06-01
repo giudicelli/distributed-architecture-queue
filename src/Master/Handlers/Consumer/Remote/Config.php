@@ -16,6 +16,9 @@ class Config extends RemoteConfig implements ConfigInterface
 
     protected $host = 'localhost';
 
+    /**
+     * {@inheritdoc}
+     */
     public function fromArray(array $config): void
     {
         parent::fromArray($config);
@@ -28,6 +31,9 @@ class Config extends RemoteConfig implements ConfigInterface
         }
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function setPort(int $port): ConfigInterface
     {
         $this->port = $port;
@@ -35,11 +41,17 @@ class Config extends RemoteConfig implements ConfigInterface
         return $this;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getPort(): int
     {
         return $this->port;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function setHost(string $host): ConfigInterface
     {
         $this->host = $host;
@@ -47,6 +59,9 @@ class Config extends RemoteConfig implements ConfigInterface
         return $this;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getHost(): string
     {
         return $this->host;

@@ -17,6 +17,9 @@ class Config extends LocalConfig implements ConfigInterface
 
     protected $bindTo = 'localhost';
 
+    /**
+     * {@inheritdoc}
+     */
     public function fromArray(array $config): void
     {
         parent::fromArray($config);
@@ -29,6 +32,9 @@ class Config extends LocalConfig implements ConfigInterface
         }
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function setPort(int $port): ConfigInterface
     {
         $this->port = $port;
@@ -36,11 +42,17 @@ class Config extends LocalConfig implements ConfigInterface
         return $this;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getPort(): int
     {
         return $this->port;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function setBindTo(string $bindTo): ConfigInterface
     {
         $this->bindTo = $bindTo;
@@ -48,11 +60,17 @@ class Config extends LocalConfig implements ConfigInterface
         return $this;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getBindTo(): string
     {
         return $this->bindTo;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function setInstancesCount(int $instancesCount): ProcessConfigInterface
     {
         if ($instancesCount > 1) {
@@ -62,6 +80,9 @@ class Config extends LocalConfig implements ConfigInterface
         return $this;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getInstancesCount(): int
     {
         return 1;
