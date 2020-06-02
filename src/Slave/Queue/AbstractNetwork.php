@@ -3,6 +3,7 @@
 namespace giudicelli\DistributedArchitectureQueue\Slave\Queue;
 
 use giudicelli\DistributedArchitecture\Slave\StoppableInterface;
+use Psr\Log\LoggerInterface;
 
 abstract class AbstractNetwork
 {
@@ -20,8 +21,11 @@ abstract class AbstractNetwork
     protected $id = '';
     protected $timeout = 5;
 
-    public function __construct(StoppableInterface $stoppable, ProtocolInterface $protocol, string $id, int $port, $timeout = 5)
+    protected $logger;
+
+    public function __construct(LoggerInterface $logger, StoppableInterface $stoppable, ProtocolInterface $protocol, string $id, int $port, $timeout = 5)
     {
+        $this->logger = $logger;
         $this->stoppable = $stoppable;
         $this->protocol = $protocol;
         $this->id = $id;

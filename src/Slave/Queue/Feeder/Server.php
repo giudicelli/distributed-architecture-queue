@@ -5,6 +5,7 @@ namespace giudicelli\DistributedArchitectureQueue\Slave\Queue\Feeder;
 use giudicelli\DistributedArchitecture\Slave\StoppableInterface;
 use giudicelli\DistributedArchitectureQueue\Slave\Queue\AbstractNetwork;
 use giudicelli\DistributedArchitectureQueue\Slave\Queue\ProtocolInterface;
+use Psr\Log\LoggerInterface;
 
 class Server extends AbstractNetwork
 {
@@ -14,9 +15,9 @@ class Server extends AbstractNetwork
     /** @var array<ClientConnection> */
     protected $connections = [];
 
-    public function __construct(StoppableInterface $stoppable, ProtocolInterface $protocol, string $id, string $bindTo, int $port, int $timeout = 5)
+    public function __construct(LoggerInterface $logger, StoppableInterface $stoppable, ProtocolInterface $protocol, string $id, string $bindTo, int $port, int $timeout = 5)
     {
-        parent::__construct($stoppable, $protocol, $id, $port, $timeout);
+        parent::__construct($logger, $stoppable, $protocol, $id, $port, $timeout);
         @unlink($this->socketUnixPath);
         $this->bindTo = $bindTo;
     }
@@ -46,7 +47,7 @@ class Server extends AbstractNetwork
             }
         }
 
-        echo "{level:info}Waiting for new connections\n";
+        $this->logger->info('Waiting for new connections');
 
         for (;;) {
             // Get new incoming connections
@@ -80,7 +81,7 @@ class Server extends AbstractNetwork
 
                 if ($feeder->empty()) {
                     // There is job available at the time
-                    echo "{level:notice}Feeder queue is empty\n";
+                    $this->logger->notice('Feeder queue is empty');
                 }
                 if ($this->stoppable->mustStop()) {
                     break;
@@ -157,7 +158,7 @@ class Server extends AbstractNetwork
             // An error
             if ($this->protocol->isErrorIgnorable()) {
                 $err = socket_strerror(socket_last_error());
-                echo "{level:warning}socket_select failed for readable sockets: {$err}\n";
+                $this->logger->warning("socket_select failed for readable sockets: {$err}");
             }
 
             return false;
@@ -179,7 +180,7 @@ class Server extends AbstractNetwork
             } catch (\Exception $e) {
                 $connection = null;
                 unset($this->connections[$id]);
-                echo "{level:warning}{$e->getMessage()}, closing connection\n";
+                $this->logger->warning("{$e->getMessage()}, closing connection");
             }
         }
 
@@ -204,7 +205,7 @@ class Server extends AbstractNetwork
         if ($limitCount) {
             $availableConnections = array_slice($availableConnections, 0, $limitCount);
         }
-        echo '{level:debug}Available consumers: '.count($availableConnections).' / '.count($this->connections)."\n";
+        $this->logger->debug('Available consumers: '.count($availableConnections).' / '.count($this->connections));
 
         foreach ($availableConnections as $id => $connection) {
             if ($feeder->empty()) {
@@ -218,7 +219,7 @@ class Server extends AbstractNetwork
             } catch (\Exception $e) {
                 $connection = null;
                 unset($this->connections[$id]);
-                echo "{level:warning}{$e->getMessage()}, closing connection\n";
+                $this->logger->warning("{$e->getMessage()}, closing connection");
             }
 
             // Were we asked to stop?
@@ -248,13 +249,13 @@ class Server extends AbstractNetwork
         $this->socketUnix = @socket_create(AF_UNIX, SOCK_STREAM, 0);
         if (!$this->socketUnix) {
             $err = socket_strerror(socket_last_error());
-            echo "{level:error}Failed to create UNIX socket: {$err}\n";
+            $this->logger->error("Failed to create UNIX socket: {$err}");
 
             return false;
         }
         if (!@socket_set_option($this->socketUnix, SOL_SOCKET, SO_REUSEPORT, 1)) {
             $err = socket_strerror(socket_last_error());
-            echo "{level:error}Failed to call socket_set_option SO_REUSEPORT: {$err}\n";
+            $this->logger->error("Failed to call socket_set_option SO_REUSEPORT: {$err}");
 
             return false;
         }
@@ -262,7 +263,7 @@ class Server extends AbstractNetwork
         @unlink($this->socketUnixPath);
         if (!@socket_bind($this->socketUnix, $this->socketUnixPath)) {
             $err = socket_strerror(socket_last_error());
-            echo "{level:error}Could not bind to {$this->socketUnixPath}: {$err}\n";
+            $this->logger->error("Could not bind to {$this->socketUnixPath}: {$err}");
 
             return false;
         }
@@ -270,7 +271,7 @@ class Server extends AbstractNetwork
 
         if (!@socket_listen($this->socketUnix, 1024)) {
             $err = socket_strerror(socket_last_error());
-            echo "{level:error}Could not listen on {$this->socketUnixPath}: {$err}\n";
+            $this->logger->error("Could not listen on {$this->socketUnixPath}: {$err}");
 
             return false;
         }
@@ -283,19 +284,19 @@ class Server extends AbstractNetwork
         $this->socket = @socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
         if (!$this->socket) {
             $err = socket_strerror(socket_last_error());
-            echo "{level:error}Failed to create TCP socket: {$err}\n";
+            $this->logger->error("Failed to create TCP socket: {$err}");
 
             return false;
         }
         if (!@socket_set_option($this->socket, SOL_SOCKET, SO_REUSEPORT, 1)) {
             $err = socket_strerror(socket_last_error());
-            echo "{level:error}Failed to call socket_set_option SO_REUSEPORT: {$err}\n";
+            $this->logger->error("Failed to call socket_set_option SO_REUSEPORT: {$err}");
 
             return false;
         }
         if (!@socket_set_option($this->socket, SOL_SOCKET, SO_REUSEADDR, 1)) {
             $err = socket_strerror(socket_last_error());
-            echo "{level:warning}Failed to call socket_set_option SO_REUSEADDR: {$err}\n";
+            $this->logger->error("Failed to call socket_set_option SO_REUSEADDR: {$err}");
 
             return false;
         }
@@ -305,13 +306,13 @@ class Server extends AbstractNetwork
         }
         if (!@socket_bind($this->socket, $bindTo, $this->port)) {
             $err = socket_strerror(socket_last_error());
-            echo "{level:error}Could not bind to {$bindTo}:{$this->port}: {$err}\n";
+            $this->logger->error("Could not bind to {$bindTo}:{$this->port}: {$err}");
 
             return false;
         }
         if (!@socket_listen($this->socket, 1024)) {
             $err = socket_strerror(socket_last_error());
-            echo "{level:error}Could not listen on {$bindTo}:{$this->port}: {$err}\n";
+            $this->logger->error("Could not listen on {$bindTo}:{$this->port}: {$err}");
 
             return false;
         }
@@ -336,14 +337,14 @@ class Server extends AbstractNetwork
                             $this->connections[] = new ClientConnection($this->stoppable, $this->protocol, $socket);
                             ++$newConnections;
                         } catch (\Exception $e) {
-                            echo  '{level:warning}'.$e->getMessage()."\n";
+                            $this->logger->warning($e->getMessage());
                         }
                     }
                 }
             } elseif (false === $num) {
                 if ($this->protocol->isErrorIgnorable()) {
                     $err = socket_strerror(socket_last_error());
-                    echo "{level:warning}socket_select failed: {$err}\n";
+                    $this->logger->warning("socket_select failed: {$err}");
                 }
             }
         } while ($num > 0);

@@ -3,8 +3,8 @@
 namespace giudicelli\DistributedArchitectureQueue\Slave\Queue;
 
 use giudicelli\DistributedArchitecture\Slave\StoppableInterface;
+use giudicelli\DistributedArchitectureQueue\Slave\Queue\Exception\MustStopException;
 use giudicelli\DistributedArchitectureQueue\Slave\Queue\Exception\NetworkException;
-use MustStopException;
 
 class Protocol implements ProtocolInterface
 {
@@ -135,18 +135,6 @@ class Protocol implements ProtocolInterface
 
             throw new NetworkException("Failed to call socket_set_option SO_KEEPALIVE: {$err}");
         }
-        /*
-        if (!@socket_set_option($socket, SOL_SOCKET, SO_RCVBUF, intval($this->maxLength * 0.1))) {
-            $err = socket_strerror(socket_last_error($socket));
-
-            throw new NetworkException("Failed to call socket_set_option SO_RCVBUF: {$err}");
-        }
-        if (!@socket_set_option($socket, SOL_SOCKET, SO_SNDBUF, 8192)) {
-            $err = socket_strerror(socket_last_error($socket));
-
-            throw new NetworkException("Failed to call socket_set_option SO_SNDBUF: {$err}");
-        }
-        */
         // Will fail in case of a Unix socket, but it's ok
         @socket_set_option($socket, SOL_TCP, TCP_NODELAY, 1);
     }

@@ -39,7 +39,7 @@ final class LauncherQueueTest extends TestCase
     {
         $groupConfig = $this->buildLocalGroupConfig('test', 'tests/SlaveFile.php');
 
-        $master = new LauncherQueue($this->logger);
+        $master = new LauncherQueue(true, $this->logger);
 
         $master
             ->setMaxRunningTime(30)
@@ -70,7 +70,7 @@ final class LauncherQueueTest extends TestCase
     {
         $groupConfig = $this->buildRemoteGroupConfig('test', 'tests/SlaveFile.php');
 
-        $master = new LauncherQueue($this->logger);
+        $master = new LauncherQueue(true, $this->logger);
         $master
             ->setMaxRunningTime(30)
             ->run([$groupConfig])

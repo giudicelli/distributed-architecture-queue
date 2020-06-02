@@ -161,7 +161,13 @@ class Feeder implements FeederInterface
 $handler = new HandlerQueue($_SERVER['argv'][1]);
 $handler->runQueue(
     // The consumer callback
-    function (HandlerQueue $handler, array $item) {
+    function (HandlerQueue $handler, array $item, LoggerInterface $logger) {
+
+        // Anything echoed here will be considered log level "info" by the master process.
+        // If you want another level for certain messages, use $logger.
+        // echo "Hello world!\n" is the same as $logger->info('Hello world!')
+
+
         // I received a job to handle, the job is an array form of the Job class.
         echo $item['type'].':'.$item['id']."\n";
     },

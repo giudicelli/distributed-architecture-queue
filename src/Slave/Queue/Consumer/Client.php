@@ -4,9 +4,10 @@ namespace giudicelli\DistributedArchitectureQueue\Slave\Queue\Consumer;
 
 use giudicelli\DistributedArchitecture\Slave\StoppableInterface;
 use giudicelli\DistributedArchitectureQueue\Slave\Queue\AbstractNetwork;
+use giudicelli\DistributedArchitectureQueue\Slave\Queue\Exception\MustStopException;
 use giudicelli\DistributedArchitectureQueue\Slave\Queue\Exception\NetworkException;
 use giudicelli\DistributedArchitectureQueue\Slave\Queue\ProtocolInterface;
-use MustStopException;
+use Psr\Log\LoggerInterface;
 
 class Client extends AbstractNetwork
 {
@@ -15,9 +16,9 @@ class Client extends AbstractNetwork
     protected $connectTime = 0;
     protected $gotHandshake = false;
 
-    public function __construct(StoppableInterface $stoppable, ProtocolInterface $protocol, string $id, string $host, int $port, int $timeout = 5)
+    public function __construct(LoggerInterface $logger, StoppableInterface $stoppable, ProtocolInterface $protocol, string $id, string $host, int $port, int $timeout = 5)
     {
-        parent::__construct($stoppable, $protocol, $id, $port, $timeout);
+        parent::__construct($logger, $stoppable, $protocol, $id, $port, $timeout);
         $this->host = $host;
     }
 
@@ -54,7 +55,7 @@ class Client extends AbstractNetwork
                     $this->protocol->sendJobDone($this->socket);
                 }
             } catch (NetworkException $e) {
-                echo '{level:warning}'.$e->getMessage()."\n";
+                $this->logger->warning($e->getMessage());
                 $this->clean();
             } catch (MustStopException $e) {
                 // We're supposed to stop, exit the loop
@@ -89,7 +90,7 @@ class Client extends AbstractNetwork
                     $this->gotHandshake = true;
                 }
             } catch (NetworkException $e) {
-                echo '{level:warning}'.$e->getMessage()."\n";
+                $this->logger->warning($e->getMessage());
                 $this->clean();
 
                 return false;
@@ -118,12 +119,12 @@ class Client extends AbstractNetwork
     {
         $this->socket = @socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
         if (!$this->socket) {
-            echo "{level:warning}Failed to create socket\n";
+            $this->logger->warning('Failed to create socket');
 
             return false;
         }
         if (!@socket_set_option($this->socket, SOL_SOCKET, SO_REUSEPORT, 1)) {
-            echo "{level:warning}Failed to call socket_set_option SO_REUSEPORT\n";
+            $this->logger->warning('Failed to call socket_set_option SO_REUSEPORT');
 
             return false;
         }
@@ -136,16 +137,16 @@ class Client extends AbstractNetwork
             return false;
         }
         if (!$result) {
-            echo "{level:warning}Connect to {$this->host}:{$this->port} failed\n";
+            $this->logger->warning("Connect to {$this->host}:{$this->port} failed");
 
             return false;
         }
         if (!@socket_set_option($this->socket, SOL_TCP, TCP_NODELAY, 1)) {
-            echo "{level:warning}Failed to call socket_set_option SO_KEEPALIVE\n";
+            $this->logger->warning('Failed to call socket_set_option SO_KEEPALIVE');
 
             return false;
         }
-        echo "{level:debug}Connected to {$this->host}:{$this->port}\n";
+        $this->logger->debug("Connected to {$this->host}:{$this->port}");
 
         return true;
     }
@@ -157,7 +158,7 @@ class Client extends AbstractNetwork
             return false;
         }
         if (!@socket_set_option($this->socket, SOL_SOCKET, SO_REUSEPORT, 1)) {
-            echo "{level:warning}Failed to call socket_set_option SO_REUSEPORT\n";
+            $this->logger->warning('Failed to call socket_set_option SO_REUSEPORT');
 
             return false;
         }
@@ -171,7 +172,7 @@ class Client extends AbstractNetwork
         if ($this->stoppable->mustStop()) {
             return false;
         }
-        echo "{level:debug}Connected to {$this->socketUnixPath}\n";
+        $this->logger->debug("Connected to {$this->socketUnixPath}");
 
         return true;
     }
