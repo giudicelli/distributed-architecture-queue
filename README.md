@@ -81,6 +81,7 @@ Using the above example, here is an possible implementation for "script.php".
 ```php
 use giudicelli\DistributedArchitectureQueue\Slave\HandlerQueue;
 use giudicelli\DistributedArchitectureQueue\Slave\Queue\Feeder\FeederInterface;
+use Psr\Log\LoggerInterface;
 
 if (empty($_SERVER['argv'][1])) {
     echo "Empty params\n";
