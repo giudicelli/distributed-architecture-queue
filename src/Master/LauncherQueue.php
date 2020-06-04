@@ -21,7 +21,7 @@ class LauncherQueue extends Launcher
     /**
      * {@inheritdoc}
      */
-    public function run(array $groupConfigs, ?EventsInterface $events = null): void
+    public function run(array $groupConfigs, ?EventsInterface $events = null, bool $neverExit = false): void
     {
         foreach ($groupConfigs as $groupConfig) {
             // Make sure we have a single feeder in the configuration
@@ -40,7 +40,7 @@ class LauncherQueue extends Launcher
             }
         }
 
-        parent::run($groupConfigs, $events);
+        parent::run($groupConfigs, $events, $neverExit);
     }
 
     /**
