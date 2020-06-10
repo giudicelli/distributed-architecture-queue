@@ -2,7 +2,7 @@
 
 namespace giudicelli\DistributedArchitectureQueue\Slave\Queue;
 
-use giudicelli\DistributedArchitecture\Slave\StoppableInterface;
+use giudicelli\DistributedArchitecture\StoppableInterface;
 use giudicelli\DistributedArchitectureQueue\Slave\Queue\Exception\MustStopException;
 use giudicelli\DistributedArchitectureQueue\Slave\Queue\Exception\NetworkException;
 

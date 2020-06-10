@@ -2,7 +2,7 @@
 
 namespace giudicelli\DistributedArchitectureQueue\Slave\Queue;
 
-use giudicelli\DistributedArchitecture\Slave\StoppableInterface;
+use giudicelli\DistributedArchitecture\StoppableInterface;
 use Psr\Log\LoggerInterface;
 
 abstract class AbstractNetwork

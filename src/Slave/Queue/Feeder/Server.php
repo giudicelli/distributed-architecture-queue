@@ -2,7 +2,7 @@
 
 namespace giudicelli\DistributedArchitectureQueue\Slave\Queue\Feeder;
 
-use giudicelli\DistributedArchitecture\Slave\StoppableInterface;
+use giudicelli\DistributedArchitecture\StoppableInterface;
 use giudicelli\DistributedArchitectureQueue\Slave\Queue\AbstractNetwork;
 use giudicelli\DistributedArchitectureQueue\Slave\Queue\ProtocolInterface;
 use Psr\Log\LoggerInterface;

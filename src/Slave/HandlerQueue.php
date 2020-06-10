@@ -3,6 +3,7 @@
 namespace giudicelli\DistributedArchitectureQueue\Slave;
 
 use giudicelli\DistributedArchitecture\Helper\InterProcessLogger;
+use giudicelli\DistributedArchitecture\Master\ConfigInterface;
 use giudicelli\DistributedArchitecture\Master\ProcessConfigInterface;
 use giudicelli\DistributedArchitecture\Slave\Handler;
 use giudicelli\DistributedArchitectureQueue\Master\Handlers\Consumer\ConfigInterface as ConsumerConfigInterface;
@@ -92,7 +93,7 @@ class HandlerQueue extends Handler
 
         $logger = new InterProcessLogger(false);
 
-        $server = new Server($logger, $this, $this->getProtocolHandler(), $this->groupConfig->getName(), $bindTo, $port);
+        $server = new Server($logger, $this, $this->getProtocolHandler($config), $this->groupConfig->getName(), $bindTo, $port);
         $server->run($feeder);
         $this->sendEnded();
     }
@@ -110,7 +111,7 @@ class HandlerQueue extends Handler
 
         $logger = new InterProcessLogger(false);
 
-        $client = new Client($logger, $this, $this->getProtocolHandler(), $this->groupConfig->getName(), $host, $port);
+        $client = new Client($logger, $this, $this->getProtocolHandler($config), $this->groupConfig->getName(), $host, $port);
 
         $me = $this;
         $client->run(function (array $item) use ($me, $processCallback, $logger) {
@@ -121,9 +122,13 @@ class HandlerQueue extends Handler
 
     /**
      * Return a protocol handler, it has to be the same implementation between the feeder and the consumers.
+     *
+     * @param ConfigInterface $config A config interface to use its timeout
+     *
+     * @return ProtocolInterface an instance of ProtocolInterface
      */
-    protected function getProtocolHandler(): ProtocolInterface
+    protected function getProtocolHandler(ConfigInterface $config): ProtocolInterface
     {
-        return new Protocol($this);
+        return new Protocol($this, $config->getTimeout());
     }
 }

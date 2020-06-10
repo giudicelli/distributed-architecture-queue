@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace giudicelli\DistributedArchitecture\tests;
+namespace giudicelli\DistributedArchitectureQueue\tests;
 
 use giudicelli\DistributedArchitecture\Master\Handlers\GroupConfig;
 use giudicelli\DistributedArchitectureQueue\Master\Handlers\Consumer\Local\Config as LocalConsumerConfig;

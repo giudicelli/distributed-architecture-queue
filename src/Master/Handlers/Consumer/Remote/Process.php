@@ -3,7 +3,7 @@
 namespace giudicelli\DistributedArchitectureQueue\Master\Handlers\Consumer\Remote;
 
 use giudicelli\DistributedArchitecture\Master\Handlers\Remote\Process as RemoteProcess;
-use giudicelli\DistributedArchitectureQueue\Master\Handlers\Consumer\Local\Config as ConfigLocal;
+use giudicelli\DistributedArchitectureQueue\Master\Handlers\Consumer\Local\Config as LocalConfig;
 
 /**
  * A queue consumer process started on a remote host.
@@ -27,6 +27,6 @@ class Process extends RemoteProcess
      */
     protected function getRemoteConfigClass(): string
     {
-        return ConfigLocal::class;
+        return LocalConfig::class;
     }
 }

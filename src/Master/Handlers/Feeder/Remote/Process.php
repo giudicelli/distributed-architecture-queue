@@ -3,7 +3,7 @@
 namespace giudicelli\DistributedArchitectureQueue\Master\Handlers\Feeder\Remote;
 
 use giudicelli\DistributedArchitecture\Master\Handlers\Remote\Process as RemoteProcess;
-use giudicelli\DistributedArchitectureQueue\Master\Handlers\Feeder\Local\Config as ConfigLocal;
+use giudicelli\DistributedArchitectureQueue\Master\Handlers\Feeder\Local\Config as LocalConfig;
 
 /**
  * A queue feeder process started on a remote host.
@@ -27,6 +27,6 @@ class Process extends RemoteProcess
      */
     protected function getRemoteConfigClass(): string
     {
-        return ConfigLocal::class;
+        return LocalConfig::class;
     }
 }

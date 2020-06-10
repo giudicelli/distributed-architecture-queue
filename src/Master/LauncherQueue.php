@@ -5,6 +5,8 @@ namespace giudicelli\DistributedArchitectureQueue\Master;
 use giudicelli\DistributedArchitecture\Master\EventsInterface;
 use giudicelli\DistributedArchitecture\Master\GroupConfigInterface;
 use giudicelli\DistributedArchitecture\Master\Launcher;
+use giudicelli\DistributedArchitecture\Master\ProcessConfigInterface;
+use giudicelli\DistributedArchitectureQueue\Master\Handlers\Consumer\ConfigInterface as ConsumerConfigInterface;
 use giudicelli\DistributedArchitectureQueue\Master\Handlers\Consumer\Local\Process as ProcessConsumerLocal;
 use giudicelli\DistributedArchitectureQueue\Master\Handlers\Consumer\Remote\Process as ProcessConsumerRemote;
 use giudicelli\DistributedArchitectureQueue\Master\Handlers\Feeder\ConfigInterface as FeederConfigInterface;
@@ -21,73 +23,50 @@ class LauncherQueue extends Launcher
     /**
      * {@inheritdoc}
      */
-    public function run(array $groupConfigs, ?EventsInterface $events = null, bool $neverExit = false): void
+    protected function checkGroupConfigs(array $groupConfigs): void
     {
+        parent::checkGroupConfigs($groupConfigs);
+
         foreach ($groupConfigs as $groupConfig) {
-            // Make sure we have a single feeder in the configuration
+            // Make sure we have a single feeder in each group configuration,
+            // and at least one consumer
             $processConfigs = $groupConfig->getProcessConfigs();
             $feeder = null;
+            $consumers = [];
             foreach ($processConfigs as $processConfig) {
                 if (in_array(FeederConfigInterface::class, class_implements($processConfig))) {
                     if ($feeder) {
                         throw new \InvalidArgumentException($groupConfig->getName().': You can have only one feeder');
                     }
                     $feeder = $processConfig;
+                } elseif (in_array(ConsumerConfigInterface::class, class_implements($processConfig))) {
+                    $consumers[] = $processConfig;
                 }
             }
             if (!$feeder) {
                 throw new \InvalidArgumentException($groupConfig->getName().': You must have one feeder');
             }
-        }
+            if (empty($consumers)) {
+                throw new \InvalidArgumentException($groupConfig->getName().': You must have at least one consumer');
+            }
 
-        parent::run($groupConfigs, $events, $neverExit);
+            // Make sure the feeder is the first process
+            $groupConfig->setProcessConfigs(array_merge([$feeder], $consumers));
+        }
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function startGroup(GroupConfigInterface $groupConfig, int $idStart, int $groupIdStart, int $groupCount, ?EventsInterface $events): int
+    protected function startGroupProcess(GroupConfigInterface $groupConfig, ProcessConfigInterface $processConfig, int $idStart, int $groupIdStart, int $groupCount, ?EventsInterface $events): int
     {
-        $processesCount = 0;
-
-        // First we always start the feeder process
-        foreach ($groupConfig->getProcessConfigs() as $processConfig) {
-            if ($this->mustStop) {
-                break;
-            }
-            if (in_array(FeederConfigInterface::class, class_implements($processConfig))) {
-                $count = $this->startGroupProcess($groupConfig, $processConfig, $idStart, $groupIdStart, $groupCount, $events);
-
-                $idStart += $count;
-                $groupIdStart += $count;
-                $processesCount += $count;
-
-                break;
-            }
-        }
-
-        // Give a bit of time to the feeder to startup
-        if (!$this->mustStop) {
+        $count = parent::startGroupProcess($groupConfig, $processConfig, $idStart, $groupIdStart, $groupCount, $events);
+        if (in_array(FeederConfigInterface::class, class_implements($processConfig))) {
+            // Give a bit of time for the feeder to start
             sleep(2);
         }
 
-        // Now we start the consumer processes
-        foreach ($groupConfig->getProcessConfigs() as $processConfig) {
-            if ($this->mustStop) {
-                break;
-            }
-            if (!in_array(FeederConfigInterface::class, class_implements($processConfig))) {
-                $count = $this->startGroupProcess($groupConfig, $processConfig, $idStart, $groupIdStart, $groupCount, $events);
-
-                $idStart += $count;
-                $groupIdStart += $count;
-                $processesCount += $count;
-
-                break;
-            }
-        }
-
-        return $processesCount;
+        return $count;
     }
 
     /**
