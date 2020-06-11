@@ -51,16 +51,16 @@ class HandlerQueue extends Handler
      */
     protected function handleQueueCommand(callable $processCallback, FeederInterface $feeder): void
     {
-        $processConfig = $this->getCommandConfigObject();
-
         switch ($this->params[self::PARAM_COMMAND]) {
             case self::PARAM_COMMAND_START_FEEDER:
                 $this->setUpSignalHandler();
+                $processConfig = $this->getCommandConfigObject();
                 $this->handleFeeder($feeder, $processConfig);
 
             break;
             case self::PARAM_COMMAND_START_CONSUMER:
                 $this->setUpSignalHandler();
+                $processConfig = $this->getCommandConfigObject();
                 $this->handleConsumer($processCallback, $processConfig);
 
             break;
@@ -93,7 +93,15 @@ class HandlerQueue extends Handler
 
         $logger = new InterProcessLogger(false);
 
-        $server = new Server($logger, $this, $this->getProtocolHandler($config), $this->groupConfig->getName(), $bindTo, $port);
+        $server = new Server(
+            $logger,
+            $this,
+            $this->getProtocolHandler($config),
+            $this->groupConfig->getName(),
+            $bindTo,
+            $port,
+            $this->getTimeout($config, $this->groupConfig)
+        );
         $server->run($feeder);
         $this->sendEnded();
     }
@@ -111,7 +119,15 @@ class HandlerQueue extends Handler
 
         $logger = new InterProcessLogger(false);
 
-        $client = new Client($logger, $this, $this->getProtocolHandler($config), $this->groupConfig->getName(), $host, $port);
+        $client = new Client(
+            $logger,
+            $this,
+            $this->getProtocolHandler($config),
+            $this->groupConfig->getName(),
+            $host,
+            $port,
+            $this->getTimeout($config, $this->groupConfig)
+        );
 
         $me = $this;
         $client->run(function (array $item) use ($me, $processCallback, $logger) {
@@ -129,6 +145,18 @@ class HandlerQueue extends Handler
      */
     protected function getProtocolHandler(ConfigInterface $config): ProtocolInterface
     {
-        return new Protocol($this, $config->getTimeout());
+        return new Protocol($this, $this->getTimeout($config, $this->groupConfig));
+    }
+
+    protected function getTimeout(ConfigInterface $primary, ConfigInterface $secondary, int $default = 5): int
+    {
+        if ($primary->getTimeout() > 0) {
+            return $primary->getTimeout();
+        }
+        if ($secondary->getTimeout() > 0) {
+            return $secondary->getTimeout();
+        }
+
+        return $default;
     }
 }
