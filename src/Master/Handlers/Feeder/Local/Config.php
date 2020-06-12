@@ -2,8 +2,8 @@
 
 namespace giudicelli\DistributedArchitectureQueue\Master\Handlers\Feeder\Local;
 
+use giudicelli\DistributedArchitecture\Config\ProcessConfigInterface;
 use giudicelli\DistributedArchitecture\Master\Handlers\Local\Config as LocalConfig;
-use giudicelli\DistributedArchitecture\Master\ProcessConfigInterface;
 use giudicelli\DistributedArchitectureQueue\Master\Handlers\Feeder\ConfigInterface;
 
 /**

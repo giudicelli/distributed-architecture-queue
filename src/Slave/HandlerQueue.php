@@ -2,9 +2,9 @@
 
 namespace giudicelli\DistributedArchitectureQueue\Slave;
 
+use giudicelli\DistributedArchitecture\Config\ConfigInterface;
+use giudicelli\DistributedArchitecture\Config\ProcessConfigInterface;
 use giudicelli\DistributedArchitecture\Helper\InterProcessLogger;
-use giudicelli\DistributedArchitecture\Master\ConfigInterface;
-use giudicelli\DistributedArchitecture\Master\ProcessConfigInterface;
 use giudicelli\DistributedArchitecture\Slave\Handler;
 use giudicelli\DistributedArchitectureQueue\Master\Handlers\Consumer\ConfigInterface as ConsumerConfigInterface;
 use giudicelli\DistributedArchitectureQueue\Master\Handlers\Feeder\ConfigInterface as FeederConfigInterface;

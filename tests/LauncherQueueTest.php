@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace giudicelli\DistributedArchitectureQueue\tests;
 
-use giudicelli\DistributedArchitecture\Master\Handlers\GroupConfig;
+use giudicelli\DistributedArchitecture\Config\GroupConfig;
 use giudicelli\DistributedArchitectureQueue\Master\Handlers\Consumer\Local\Config as LocalConsumerConfig;
 use giudicelli\DistributedArchitectureQueue\Master\Handlers\Consumer\Remote\Config as RemoteConsumerConfig;
 use giudicelli\DistributedArchitectureQueue\Master\Handlers\Feeder\Local\Config as LocalFeederConfig;
@@ -43,7 +43,8 @@ final class LauncherQueueTest extends TestCase
 
         $master
             ->setMaxRunningTime(30)
-            ->run([$groupConfig])
+            ->setGroupConfigs([$groupConfig])
+            ->runMaster()
         ;
 
         $output = $this->logger->getOutput();
@@ -73,7 +74,8 @@ final class LauncherQueueTest extends TestCase
         $master = new LauncherQueue(true, $this->logger);
         $master
             ->setMaxRunningTime(30)
-            ->run([$groupConfig])
+            ->setGroupConfigs([$groupConfig])
+            ->runMaster()
         ;
 
         $output = $this->logger->getOutput();

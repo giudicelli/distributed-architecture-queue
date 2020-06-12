@@ -2,10 +2,9 @@
 
 namespace giudicelli\DistributedArchitectureQueue\Master;
 
-use giudicelli\DistributedArchitecture\Master\EventsInterface;
-use giudicelli\DistributedArchitecture\Master\GroupConfigInterface;
+use giudicelli\DistributedArchitecture\Config\GroupConfigInterface;
+use giudicelli\DistributedArchitecture\Config\ProcessConfigInterface;
 use giudicelli\DistributedArchitecture\Master\Launcher;
-use giudicelli\DistributedArchitecture\Master\ProcessConfigInterface;
 use giudicelli\DistributedArchitectureQueue\Master\Handlers\Consumer\ConfigInterface as ConsumerConfigInterface;
 use giudicelli\DistributedArchitectureQueue\Master\Handlers\Consumer\Local\Process as ProcessConsumerLocal;
 use giudicelli\DistributedArchitectureQueue\Master\Handlers\Consumer\Remote\Process as ProcessConsumerRemote;
@@ -26,6 +25,11 @@ class LauncherQueue extends Launcher
     protected function checkGroupConfigs(array $groupConfigs): void
     {
         parent::checkGroupConfigs($groupConfigs);
+
+        // Only check on master launcher
+        if (!$this->isMaster()) {
+            return;
+        }
 
         foreach ($groupConfigs as $groupConfig) {
             // Make sure we have a single feeder in each group configuration,
@@ -58,9 +62,9 @@ class LauncherQueue extends Launcher
     /**
      * {@inheritdoc}
      */
-    protected function startGroupProcess(GroupConfigInterface $groupConfig, ProcessConfigInterface $processConfig, int $idStart, int $groupIdStart, int $groupCount, ?EventsInterface $events): int
+    protected function startGroupProcess(GroupConfigInterface $groupConfig, ProcessConfigInterface $processConfig, int $idStart, int $groupIdStart, int $groupCount): int
     {
-        $count = parent::startGroupProcess($groupConfig, $processConfig, $idStart, $groupIdStart, $groupCount, $events);
+        $count = parent::startGroupProcess($groupConfig, $processConfig, $idStart, $groupIdStart, $groupCount);
         if (in_array(FeederConfigInterface::class, class_implements($processConfig))) {
             // Give a bit of time for the feeder to start
             sleep(2);

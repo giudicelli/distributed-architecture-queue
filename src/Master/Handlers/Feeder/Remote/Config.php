@@ -2,8 +2,8 @@
 
 namespace giudicelli\DistributedArchitectureQueue\Master\Handlers\Feeder\Remote;
 
+use giudicelli\DistributedArchitecture\Config\ProcessConfigInterface;
 use giudicelli\DistributedArchitecture\Master\Handlers\Remote\Config as RemoteConfig;
-use giudicelli\DistributedArchitecture\Master\ProcessConfigInterface;
 use giudicelli\DistributedArchitectureQueue\Master\Handlers\Feeder\ConfigInterface;
 
 /**

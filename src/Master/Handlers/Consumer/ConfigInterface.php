@@ -2,7 +2,7 @@
 
 namespace giudicelli\DistributedArchitectureQueue\Master\Handlers\Consumer;
 
-use giudicelli\DistributedArchitecture\Master\ProcessConfigInterface;
+use giudicelli\DistributedArchitecture\Config\ProcessConfigInterface;
 
 /**
  * Define the interface for a consumer config.
