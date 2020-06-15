@@ -51,10 +51,10 @@ final class LauncherQueueTest extends TestCase
         sort($output);
 
         $expected = [
-            'debug - [test] [localhost] [Consumer - tests/SlaveFile.php/2/2] Connected to /tmp/gdaq_117d4fd0db608747bc65ba337b9d0531c6836137.sock',
             'debug - [test] [localhost] [Feeder - tests/SlaveFile.php/1/1] Available consumers: 1 / 1',
             'debug - [test] [localhost] [Feeder - tests/SlaveFile.php/1/1] Available consumers: 1 / 1',
             'debug - [test] [localhost] [Feeder - tests/SlaveFile.php/1/1] Available consumers: 1 / 1',
+            'info - [test] [localhost] [Consumer - tests/SlaveFile.php/2/2] Connected to /tmp/gdaq_117d4fd0db608747bc65ba337b9d0531c6836137.sock',
             'info - [test] [localhost] [Consumer - tests/SlaveFile.php/2/2] MyType:1',
             'info - [test] [localhost] [Consumer - tests/SlaveFile.php/2/2] MyType:2',
             'info - [test] [localhost] [Consumer - tests/SlaveFile.php/2/2] MyType:3',
@@ -86,10 +86,10 @@ final class LauncherQueueTest extends TestCase
             'debug - [test] [127.0.0.2] Connected to host',
             'debug - [test] [127.0.0.2] Connected to host',
             'debug - [test] [127.0.0.2] Connected to host',
-            'debug - [test] [127.0.0.2] [Consumer - tests/SlaveFile.php/2/2] Connected to /tmp/gdaq_117d4fd0db608747bc65ba337b9d0531c6836137.sock',
             'debug - [test] [127.0.0.2] [Feeder - tests/SlaveFile.php/1/1] Available consumers: 1 / 1',
             'debug - [test] [127.0.0.2] [Feeder - tests/SlaveFile.php/1/1] Available consumers: 1 / 1',
             'debug - [test] [127.0.0.2] [Feeder - tests/SlaveFile.php/1/1] Available consumers: 1 / 1',
+            'info - [test] [127.0.0.2] [Consumer - tests/SlaveFile.php/2/2] Connected to /tmp/gdaq_117d4fd0db608747bc65ba337b9d0531c6836137.sock',
             'info - [test] [127.0.0.2] [Consumer - tests/SlaveFile.php/2/2] MyType:1',
             'info - [test] [127.0.0.2] [Consumer - tests/SlaveFile.php/2/2] MyType:2',
             'info - [test] [127.0.0.2] [Consumer - tests/SlaveFile.php/2/2] MyType:3',

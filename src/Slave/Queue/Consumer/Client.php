@@ -146,7 +146,7 @@ class Client extends AbstractNetwork
 
             return false;
         }
-        $this->logger->debug("Connected to {$this->host}:{$this->port}");
+        $this->logger->info("Connected to {$this->host}:{$this->port}");
 
         return true;
     }
@@ -172,7 +172,7 @@ class Client extends AbstractNetwork
         if ($this->stoppable->mustStop()) {
             return false;
         }
-        $this->logger->debug("Connected to {$this->socketUnixPath}");
+        $this->logger->info("Connected to {$this->socketUnixPath}");
 
         return true;
     }
