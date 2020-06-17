@@ -74,11 +74,12 @@ Keep in mind that a "Master\LauncherQueue" instance will run forever, unless you
 
 ### Slave process
 
-A slave process must use the "Slave\HandlerQueue" class, as the master will be sending commands that need to handled. It also allows you're script to do a clean exit upon the master's request. A single script can perform both type of tasks, being a feeder or a consumer.
+A slave process must use the "Slave\HandlerQueue" class, as the master will be sending commands that need to handled. It also allows your script to do a clean exit upon the master's request. A single script performs both types of tasks, being a feeder or a consumer.
 
 Using the above example, here is an possible implementation for "script.php".
 
 ```php
+use giudicelli\DistributedArchitecture\Slave\HandlerInterface;
 use giudicelli\DistributedArchitectureQueue\Slave\HandlerQueue;
 use giudicelli\DistributedArchitectureQueue\Slave\Queue\Feeder\FeederInterface;
 use Psr\Log\LoggerInterface;
@@ -162,12 +163,11 @@ class Feeder implements FeederInterface
 $handler = new HandlerQueue($_SERVER['argv'][1]);
 $handler->runQueue(
     // The consumer callback
-    function (HandlerQueue $handler, array $item, LoggerInterface $logger) {
+    function (HandlerInterface $handler, array $item) {
 
         // Anything echoed here will be considered log level "info" by the master process.
-        // If you want another level for certain messages, use $logger.
-        // echo "Hello world!\n" is the same as $logger->info('Hello world!')
-
+        // If you want another level for certain messages, use $handler->getLogger().
+        // echo "Hello world!\n" is the same as $handler->getLogger()->info('Hello world!')
 
         // I received a job to handle, the job is an array form of the Job class.
         echo $item['type'].':'.$item['id']."\n";

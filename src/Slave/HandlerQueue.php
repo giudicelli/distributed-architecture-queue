@@ -4,7 +4,6 @@ namespace giudicelli\DistributedArchitectureQueue\Slave;
 
 use giudicelli\DistributedArchitecture\Config\ConfigInterface;
 use giudicelli\DistributedArchitecture\Config\ProcessConfigInterface;
-use giudicelli\DistributedArchitecture\Helper\InterProcessLogger;
 use giudicelli\DistributedArchitecture\Slave\Handler;
 use giudicelli\DistributedArchitectureQueue\Master\Handlers\Consumer\ConfigInterface as ConsumerConfigInterface;
 use giudicelli\DistributedArchitectureQueue\Master\Handlers\Feeder\ConfigInterface as FeederConfigInterface;
@@ -90,11 +89,8 @@ class HandlerQueue extends Handler
         }
         $port = $config->getPort();
         $bindTo = $config->getBindTo();
-
-        $logger = new InterProcessLogger(false);
-
         $server = new Server(
-            $logger,
+            $this->getLogger(),
             $this,
             $this->getProtocolHandler($config),
             $this->groupConfig->getName(),
@@ -117,10 +113,8 @@ class HandlerQueue extends Handler
         $port = $config->getPort();
         $host = $config->getHost();
 
-        $logger = new InterProcessLogger(false);
-
         $client = new Client(
-            $logger,
+            $this->getLogger(),
             $this,
             $this->getProtocolHandler($config),
             $this->groupConfig->getName(),
@@ -130,8 +124,8 @@ class HandlerQueue extends Handler
         );
 
         $me = $this;
-        $client->run(function (array $item) use ($me, $processCallback, $logger) {
-            call_user_func($processCallback, $me, $item, $logger);
+        $client->run(function (array $item) use ($me, $processCallback) {
+            call_user_func($processCallback, $me, $item);
         });
         $this->sendEnded();
     }

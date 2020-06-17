@@ -4,9 +4,9 @@ namespace giudicelli\DistributedArchitectureQueue\tests;
 
 include 'vendor/autoload.php';
 
+use giudicelli\DistributedArchitecture\Slave\HandlerInterface;
 use giudicelli\DistributedArchitectureQueue\Slave\HandlerQueue;
 use giudicelli\DistributedArchitectureQueue\Slave\Queue\Feeder\FeederInterface;
-use Psr\Log\LoggerInterface;
 
 if (empty($_SERVER['argv'][1])) {
     echo "Empty params\n";
@@ -80,6 +80,6 @@ class Feeder implements FeederInterface
 }
 
 $handler = new HandlerQueue($_SERVER['argv'][1]);
-$handler->runQueue(function (HandlerQueue $handler, array $item, LoggerInterface $logger) {
+$handler->runQueue(function (HandlerInterface $handler, array $item) {
     echo $item['type'].':'.$item['id']."\n";
 }, new Feeder());
